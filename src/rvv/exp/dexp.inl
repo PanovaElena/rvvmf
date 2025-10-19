@@ -82,7 +82,7 @@ static const double LOOK_UP_TABLE_LOW_F64[64] = {
     0x1.11065895048ddp-55, 0x1.2884dff483cadp-54, 0x1.503cbd1e949dbp-56, -0x1.cbc3743797a9cp-54,
     0x1.2ed02d75b3707p-55, 0x1.c2300696db532p-54, -0x1.1a5cd4f184b5cp-54, 0x1.39e8980a9cc8fp-55,
     -0x1.e9c23179c2893p-54, 0x1.dc7f486a4b6bp-54, 0x1.9d3e12dd8a18bp-54, 0x1.74853f3a5931ep-55
-}; 
+};
 
 const double EXP_POL_COEFF_2_F64 = 0x1p-1;
 const double EXP_POL_COEFF_3_F64 = 0x1.55555555548bap-3;
@@ -110,8 +110,8 @@ forceinline void check_special_cases_f64m1(vfloat64m1_t& x, vfloat64m1_t& specia
     vbool64_t mask = __riscv_vmand_mm_b64(__riscv_vmfgt_vf_f64m1_b64(x, overflowThreshold, vl),
         __riscv_vmflt_vf_f64m1_b64(x, RVVMF_EXP_AS_FP64(pinf), vl), vl);
     special = __riscv_vfmerge_vfm_f64m1(special, RVVMF_EXP_AS_FP64(pinf), mask, vl);
-    specialMask = __riscv_vmor_mm_b64(specialMask, mask, vl);  
-    if (__riscv_vcpop_m_b64(mask, vl)) RVVMF_EXP_CALL_FE_OVERFLOW(); 
+    specialMask = __riscv_vmor_mm_b64(specialMask, mask, vl);
+    if (__riscv_vcpop_m_b64(mask, vl)) RVVMF_EXP_CALL_FE_OVERFLOW();
     // NaNs, -inf -- automatically
     x = __riscv_vfmerge_vfm_f64m1(x, ZERO_F64, specialMask, vl);
 }
@@ -152,7 +152,7 @@ forceinline void calculate_exp_polynom_hl12_f64m1(const vfloat64m1_t& yh, vfloat
 {
     vfloat64m1_t sqryh = __riscv_vfmul_vv_f64m1(yh, yh, vl);
     vfloat64m1_t r = calc_polynom_deg_4_parallel_f64m1(yh, sqryh, EXP_POL_COEFF_2_F64, EXP_POL_COEFF_3_F64,
-        EXP_POL_COEFF_4_F64, EXP_POL_COEFF_5_F64, EXP_POL_COEFF_6_F64, vl);        
+        EXP_POL_COEFF_4_F64, EXP_POL_COEFF_5_F64, EXP_POL_COEFF_6_F64, vl);
     fma12_vv_f64m1(sqryh, r, yh, ph, pl, vl);
 }
 
@@ -160,38 +160,27 @@ forceinline void calculate_exp2_polynom_hl12_f64m1(const vfloat64m1_t& yh, vfloa
 {
     vfloat64m1_t sqryh = __riscv_vfmul_vv_f64m1(yh, yh, vl);
     vfloat64m1_t r = calc_polynom_deg_4_parallel_f64m1(yh, sqryh, EXP2_POL_COEFF_2_F64, EXP2_POL_COEFF_3_F64,
-        EXP2_POL_COEFF_4_F64, EXP2_POL_COEFF_5_F64, EXP2_POL_COEFF_6_F64, vl); 
+        EXP2_POL_COEFF_4_F64, EXP2_POL_COEFF_5_F64, EXP2_POL_COEFF_6_F64, vl);
     fma12_vf_f64m1(yh, EXP2_POL_COEFF_1_F64, __riscv_vfmul_vv_f64m1(sqryh, r, vl), ph, pl, vl);
 }
 
-forceinline void update_exponent_f64m1(const vuint64m1_t& ei, vfloat64m1_t& res, size_t vl)
-{
-    res = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vadd_vv_u64m1(
-        __riscv_vreinterpret_v_f64m1_u64m1(res), __riscv_vsll_vx_u64m1(ei, (size_t)52, vl), vl));
-}
-
-forceinline void update_exponent_with_subnormal_f64m1(const double& subnormalThreshold, const vfloat64m1_t& x,
+forceinline void update_exponent_f64m1(const double& subnormalThreshold, const vfloat64m1_t& x,
     const vuint64m1_t& ei, vfloat64m1_t& res, size_t vl)
 {
-#ifndef __FAST_MATH__
     uint64_t ninf = 0xfff0000000000000;
     vbool64_t subnormalMask = __riscv_vmand_mm_b64(__riscv_vmfgt_vf_f64m1_b64(x, RVVMF_EXP_AS_FP64(ninf), vl),
         __riscv_vmflt_vf_f64m1_b64(x, subnormalThreshold, vl), vl);
-    if (__riscv_vcpop_m_b64(subnormalMask, vl)) RVVMF_EXP_CALL_FE_UNDERFLOW();  // FE_UNDERFLOW
     
-    vuint64m1_t shiftNum = __riscv_vreinterpret_v_i64m1_u64m1(__riscv_vneg_v_i64m1(__riscv_vreinterpret_v_u64m1_i64m1(ei), vl));
-    shiftNum = __riscv_vand_vx_u64m1(__riscv_vadd_vx_u64m1(shiftNum, (uint64_t)1, vl), (uint64_t)0x0000000000000fff, vl);
-    shiftNum = __riscv_vsll_vx_u64m1(shiftNum, (size_t)52, vl);
-    vfloat64m1_t subnormalRes = __riscv_vfadd_vv_f64m1(res, __riscv_vreinterpret_v_u64m1_f64m1(shiftNum), vl);
-    subnormalRes = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vand_vx_u64m1(
-        __riscv_vreinterpret_v_f64m1_u64m1(subnormalRes), (uint64_t)0x800fffffffffffff, vl));
-#endif
-
-    update_exponent_f64m1(ei, res, vl);
+    vuint64m1_t pow2ei = __riscv_vsll_vx_u64m1(__riscv_vand_vx_u64m1(__riscv_vadd_vx_u64m1(ei, (uint64_t)2045, vl),  // 2045=1022+1023
+        (uint64_t)0x00000000000007ff, vl), (size_t)52, vl);
+    // multiplication calls FE_UNDERFLOW if necessary
+    vfloat64m1_t subnormalRes = __riscv_vfmul_vv_f64m1(res, __riscv_vreinterpret_v_u64m1_f64m1(pow2ei), vl);
+    subnormalRes = __riscv_vfmul_vf_f64m1(subnormalRes, 0x1p-1022, vl);
     
-#ifndef __FAST_MATH__
-    res = __riscv_vmerge_vvm_f64m1(res, subnormalRes, subnormalMask, vl);  
-#endif
+    res = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vadd_vv_u64m1(
+        __riscv_vreinterpret_v_f64m1_u64m1(res), __riscv_vsll_vx_u64m1(ei, (size_t)52, vl), vl));
+    
+    res = __riscv_vmerge_vvm_f64m1(res, subnormalRes, subnormalMask, vl);
 }
 
 forceinline void reconstruct_exp_hl_hl_f64m1(const vfloat64m1_t& x, const vuint64m1_t& ei, const vfloat64m1_t& th, const vfloat64m1_t& tl,
@@ -201,32 +190,33 @@ forceinline void reconstruct_exp_hl_hl_f64m1(const vfloat64m1_t& x, const vuint6
     fast_2_sum_fv_f64m1(ONE_F64, pm1h, sh, sl, vl);
     sl = __riscv_vfadd_vv_f64m1(sl, pm1l, vl);
     mul21_vv_f64m1(th, tl, sh, sl, res, vl);
-    update_exponent_with_subnormal_f64m1(subnormalThreshold, x, ei, res, vl);
+    update_exponent_f64m1(subnormalThreshold, x, ei, res, vl);
 }
 
 forceinline void reconstruct_expm1_f64m1(const vfloat64m1_t& th, const vfloat64m1_t& tl, 
     const vfloat64m1_t& pm1h, const vfloat64m1_t& pm1l, const vuint64m1_t& ei, vfloat64m1_t& res, size_t vl)
-{        
-    vfloat64m1_t rh, rl, sh, sl;
+{         
+    vfloat64m1_t rh, rl;
     fast_2_sum_fv_f64m1(ONE_F64, pm1h, rh, rl, vl);
     rl = __riscv_vfadd_vv_f64m1(rl, pm1l, vl);
-    mul22_vv_f64m1(th, tl, rh, rl, sh, sl, vl);
+    mul22_vv_f64m1(th, tl, rh, rl, rh, rl, vl);
     
     vuint64m1_t power = __riscv_vsll_vx_u64m1(ei, (size_t)52, vl);
-    sh = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vadd_vv_u64m1(
-        __riscv_vreinterpret_v_f64m1_u64m1(sh), power, vl));   
-    vbool64_t slZeroMask = __riscv_vmfeq_vf_f64m1_b64(sl, ZERO_F64, vl);
-    sl = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vadd_vv_u64m1(
-        __riscv_vreinterpret_v_f64m1_u64m1(sl), power, vl));
-    sl = __riscv_vfmerge_vfm_f64m1(sl, ZERO_F64, slZeroMask, vl);
+    rh = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vadd_vv_u64m1(
+        __riscv_vreinterpret_v_f64m1_u64m1(rh), power, vl));
+    vbool64_t slZeroMask = __riscv_vmfeq_vf_f64m1_b64(rl, ZERO_F64, vl);
+    rl = __riscv_vreinterpret_v_u64m1_f64m1(__riscv_vadd_vv_u64m1(
+        __riscv_vreinterpret_v_f64m1_u64m1(rl), power, vl));
+    rl = __riscv_vfmerge_vfm_f64m1(rl, ZERO_F64, slZeroMask, vl);
     
-    vbool64_t sortMask = __riscv_vmsgtu_vx_u64m1_b64(__riscv_vand_vx_u64m1(
-        __riscv_vreinterpret_v_f64m1_u64m1(sh), (uint64_t)0x7ff0000000000000, vl), (uint64_t)0x3ff0000000000000, vl);
-    vfloat64m1_t maxs = __riscv_vfmerge_vfm_f64m1(sh, EXPM1_UNDERFLOW_VALUE_F64, __riscv_vmnot_m_b64(sortMask, vl), vl);   
-    vfloat64m1_t mins = __riscv_vfmerge_vfm_f64m1(sh, EXPM1_UNDERFLOW_VALUE_F64, sortMask, vl);
-    fast_2_sum_vv_f64m1(maxs, mins, rh, rl, vl);
+    vfloat64m1_t sh, sl;
+    vbool64_t sortMask = __riscv_vmsgtu_vx_u64m1_b64(__riscv_vand_vx_u64m1(__riscv_vreinterpret_v_f64m1_u64m1(rh),
+        (uint64_t)0x7ff0000000000000, vl), (uint64_t)0x3ff0000000000000, vl);
+    vfloat64m1_t maxs = __riscv_vfmerge_vfm_f64m1(rh, EXPM1_UNDERFLOW_VALUE_F64, __riscv_vmnot_m_b64(sortMask, vl), vl);
+    vfloat64m1_t mins = __riscv_vfmerge_vfm_f64m1(rh, EXPM1_UNDERFLOW_VALUE_F64, sortMask, vl);
+    fast_2_sum_vv_f64m1(maxs, mins, sh, sl, vl);
     
-    res = __riscv_vfadd_vv_f64m1(rh, __riscv_vfadd_vv_f64m1(sl, rl, vl), vl);
+    res = __riscv_vfadd_vv_f64m1(sh, __riscv_vfadd_vv_f64m1(sl, rl, vl), vl);
 }
 
 forceinline void update_underflow_f64m1(const vfloat64m1_t& x, vfloat64m1_t& res,
@@ -234,6 +224,9 @@ forceinline void update_underflow_f64m1(const vfloat64m1_t& x, vfloat64m1_t& res
 {
     vbool64_t underflowMask = __riscv_vmflt_vf_f64m1_b64(x, underflowThreshold, vl);
     res = __riscv_vfmerge_vfm_f64m1(res, underflowValue, underflowMask, vl);
+#ifndef __FAST_MATH__
+    if (__riscv_vcpop_m_b64(underflowMask, vl)) RVVMF_EXP_CALL_FE_UNDERFLOW();  // FE_UNDERFLOW
+#endif
 }
 
 forceinline void set_sign_f64m1(const vfloat64m1_t& x, vfloat64m1_t& res, size_t vl)
@@ -267,8 +260,8 @@ forceinline void check_special_cases_f64m2(vfloat64m2_t& x, vfloat64m2_t& specia
     vbool32_t mask = __riscv_vmand_mm_b32(__riscv_vmfgt_vf_f64m2_b32(x, overflowThreshold, vl),
         __riscv_vmflt_vf_f64m2_b32(x, RVVMF_EXP_AS_FP64(pinf), vl), vl);
     special = __riscv_vfmerge_vfm_f64m2(special, RVVMF_EXP_AS_FP64(pinf), mask, vl);
-    specialMask = __riscv_vmor_mm_b32(specialMask, mask, vl);  
-    if (__riscv_vcpop_m_b32(mask, vl)) RVVMF_EXP_CALL_FE_OVERFLOW(); 
+    specialMask = __riscv_vmor_mm_b32(specialMask, mask, vl);
+    if (__riscv_vcpop_m_b32(mask, vl)) RVVMF_EXP_CALL_FE_OVERFLOW();
     // NaNs, -inf -- automatically
     x = __riscv_vfmerge_vfm_f64m2(x, ZERO_F64, specialMask, vl);
 }
@@ -288,7 +281,7 @@ forceinline void do_exp_argument_reduction_h_f64m2(const vfloat64m2_t& x,
 forceinline void do_exp2_argument_reduction_f64m2(const vfloat64m2_t& x, vfloat64m2_t& y,
     vuint64m2_t& ei, vuint64m2_t& fi, size_t vl)  // exact
 {
-    vfloat64m2_t vmagicConst1 = __riscv_vfmv_v_f_f64m2(MAGIC_CONST_1_F64, vl);   
+    vfloat64m2_t vmagicConst1 = __riscv_vfmv_v_f_f64m2(MAGIC_CONST_1_F64, vl);
     vfloat64m2_t h = __riscv_vfmadd_vf_f64m2(x, EXP2_TABLE_SIZE_DEG_F64, vmagicConst1, vl);
     vuint64m2_t hi = __riscv_vand_vx_u64m2(__riscv_vreinterpret_v_f64m2_u64m2(h), MASK_HI_BIT_F64, vl);
     fi = __riscv_vand_vx_u64m2(hi, MASK_FI_BIT_F64, vl);
@@ -317,73 +310,63 @@ forceinline void calculate_exp2_polynom_hl12_f64m2(const vfloat64m2_t& yh, vfloa
 {
     vfloat64m2_t sqryh = __riscv_vfmul_vv_f64m2(yh, yh, vl);
     vfloat64m2_t r = calc_polynom_deg_4_parallel_f64m2(yh, sqryh, EXP2_POL_COEFF_2_F64, EXP2_POL_COEFF_3_F64,
-        EXP2_POL_COEFF_4_F64, EXP2_POL_COEFF_5_F64, EXP2_POL_COEFF_6_F64, vl); 
+        EXP2_POL_COEFF_4_F64, EXP2_POL_COEFF_5_F64, EXP2_POL_COEFF_6_F64, vl);
     fma12_vf_f64m2(yh, EXP2_POL_COEFF_1_F64, __riscv_vfmul_vv_f64m2(sqryh, r, vl), ph, pl, vl);
 }
 
-forceinline void update_exponent_f64m2(const vuint64m2_t& ei, vfloat64m2_t& res, size_t vl)
-{
-    res = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vadd_vv_u64m2(
-        __riscv_vreinterpret_v_f64m2_u64m2(res), __riscv_vsll_vx_u64m2(ei, (size_t)52, vl), vl));
-}
-
-forceinline void update_exponent_with_subnormal_f64m2(const double& subnormalThreshold, const vfloat64m2_t& x,
+forceinline void update_exponent_f64m2(const double& subnormalThreshold, const vfloat64m2_t& x,
     const vuint64m2_t& ei, vfloat64m2_t& res, size_t vl)
 {
-#ifndef __FAST_MATH__
     uint64_t ninf = 0xfff0000000000000;
     vbool32_t subnormalMask = __riscv_vmand_mm_b32(__riscv_vmfgt_vf_f64m2_b32(x, RVVMF_EXP_AS_FP64(ninf), vl),
         __riscv_vmflt_vf_f64m2_b32(x, subnormalThreshold, vl), vl);
-    if (__riscv_vcpop_m_b32(subnormalMask, vl)) RVVMF_EXP_CALL_FE_UNDERFLOW();  // FE_UNDERFLOW
     
-    vuint64m2_t shiftNum = __riscv_vreinterpret_v_i64m2_u64m2(__riscv_vneg_v_i64m2(__riscv_vreinterpret_v_u64m2_i64m2(ei), vl));
-    shiftNum = __riscv_vand_vx_u64m2(__riscv_vadd_vx_u64m2(shiftNum, (uint64_t)1, vl), (uint64_t)0x0000000000000fff, vl);
-    shiftNum = __riscv_vsll_vx_u64m2(shiftNum, (size_t)52, vl);
-    vfloat64m2_t subnormalRes = __riscv_vfadd_vv_f64m2(res, __riscv_vreinterpret_v_u64m2_f64m2(shiftNum), vl);
-    subnormalRes = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vand_vx_u64m2(
-        __riscv_vreinterpret_v_f64m2_u64m2(subnormalRes), (uint64_t)0x800fffffffffffff, vl));
-#endif
-
-    update_exponent_f64m2(ei, res, vl);
+    vuint64m2_t pow2ei = __riscv_vsll_vx_u64m2(__riscv_vand_vx_u64m2(__riscv_vadd_vx_u64m2(ei, (uint64_t)2045, vl),  // 2045=1022+1023
+        (uint64_t)0x00000000000007ff, vl), (size_t)52, vl);
+    // multiplication calls FE_UNDERFLOW if necessary
+    vfloat64m2_t subnormalRes = __riscv_vfmul_vv_f64m2(res, __riscv_vreinterpret_v_u64m2_f64m2(pow2ei), vl);
+    subnormalRes = __riscv_vfmul_vf_f64m2(subnormalRes, 0x1p-1022, vl);
     
-#ifndef __FAST_MATH__
-    res = __riscv_vmerge_vvm_f64m2(res, subnormalRes, subnormalMask, vl);  
-#endif
+    res = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vadd_vv_u64m2(
+        __riscv_vreinterpret_v_f64m2_u64m2(res), __riscv_vsll_vx_u64m2(ei, (size_t)52, vl), vl));
+    
+    res = __riscv_vmerge_vvm_f64m2(res, subnormalRes, subnormalMask, vl);
 }
 
 forceinline void reconstruct_exp_hl_hl_f64m2(const vfloat64m2_t& x, const vuint64m2_t& ei, const vfloat64m2_t& th, const vfloat64m2_t& tl,
-    const vfloat64m2_t& pm2h, const vfloat64m2_t& pm2l, vfloat64m2_t& res, const double& subnormalThreshold, size_t vl)
+    const vfloat64m2_t& pm1h, const vfloat64m2_t& pm1l, vfloat64m2_t& res, const double& subnormalThreshold, size_t vl)
 {
     vfloat64m2_t sh, sl;
-    fast_2_sum_fv_f64m2(ONE_F64, pm2h, sh, sl, vl);
-    sl = __riscv_vfadd_vv_f64m2(sl, pm2l, vl);
+    fast_2_sum_fv_f64m2(ONE_F64, pm1h, sh, sl, vl);
+    sl = __riscv_vfadd_vv_f64m2(sl, pm1l, vl);
     mul21_vv_f64m2(th, tl, sh, sl, res, vl);
-    update_exponent_with_subnormal_f64m2(subnormalThreshold, x, ei, res, vl);
+    update_exponent_f64m2(subnormalThreshold, x, ei, res, vl);
 }
 
 forceinline void reconstruct_expm1_f64m2(const vfloat64m2_t& th, const vfloat64m2_t& tl, 
-    const vfloat64m2_t& pm2h, const vfloat64m2_t& pm2l, const vuint64m2_t& ei, vfloat64m2_t& res, size_t vl)
-{        
-    vfloat64m2_t rh, rl, sh, sl;
-    fast_2_sum_fv_f64m2(ONE_F64, pm2h, rh, rl, vl);
-    rl = __riscv_vfadd_vv_f64m2(rl, pm2l, vl);
-    mul22_vv_f64m2(th, tl, rh, rl, sh, sl, vl);
+    const vfloat64m2_t& pm1h, const vfloat64m2_t& pm1l, const vuint64m2_t& ei, vfloat64m2_t& res, size_t vl)
+{         
+    vfloat64m2_t rh, rl;
+    fast_2_sum_fv_f64m2(ONE_F64, pm1h, rh, rl, vl);
+    rl = __riscv_vfadd_vv_f64m2(rl, pm1l, vl);
+    mul22_vv_f64m2(th, tl, rh, rl, rh, rl, vl);
     
     vuint64m2_t power = __riscv_vsll_vx_u64m2(ei, (size_t)52, vl);
-    sh = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vadd_vv_u64m2(
-        __riscv_vreinterpret_v_f64m2_u64m2(sh), power, vl));   
-    vbool32_t slZeroMask = __riscv_vmfeq_vf_f64m2_b32(sl, ZERO_F64, vl);
-    sl = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vadd_vv_u64m2(
-        __riscv_vreinterpret_v_f64m2_u64m2(sl), power, vl));
-    sl = __riscv_vfmerge_vfm_f64m2(sl, ZERO_F64, slZeroMask, vl);
+    rh = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vadd_vv_u64m2(
+        __riscv_vreinterpret_v_f64m2_u64m2(rh), power, vl));
+    vbool32_t slZeroMask = __riscv_vmfeq_vf_f64m2_b32(rl, ZERO_F64, vl);
+    rl = __riscv_vreinterpret_v_u64m2_f64m2(__riscv_vadd_vv_u64m2(
+        __riscv_vreinterpret_v_f64m2_u64m2(rl), power, vl));
+    rl = __riscv_vfmerge_vfm_f64m2(rl, ZERO_F64, slZeroMask, vl);
     
-    vbool32_t sortMask = __riscv_vmsgtu_vx_u64m2_b32(__riscv_vand_vx_u64m2(
-        __riscv_vreinterpret_v_f64m2_u64m2(sh), (uint64_t)0x7ff0000000000000, vl), (uint64_t)0x3ff0000000000000, vl);
-    vfloat64m2_t maxs = __riscv_vfmerge_vfm_f64m2(sh, EXPM1_UNDERFLOW_VALUE_F64, __riscv_vmnot_m_b32(sortMask, vl), vl);   
-    vfloat64m2_t mins = __riscv_vfmerge_vfm_f64m2(sh, EXPM1_UNDERFLOW_VALUE_F64, sortMask, vl);
-    fast_2_sum_vv_f64m2(maxs, mins, rh, rl, vl);
+    vfloat64m2_t sh, sl;
+    vbool32_t sortMask = __riscv_vmsgtu_vx_u64m2_b32(__riscv_vand_vx_u64m2(__riscv_vreinterpret_v_f64m2_u64m2(rh),
+        (uint64_t)0x7ff0000000000000, vl), (uint64_t)0x3ff0000000000000, vl);
+    vfloat64m2_t maxs = __riscv_vfmerge_vfm_f64m2(rh, EXPM1_UNDERFLOW_VALUE_F64, __riscv_vmnot_m_b32(sortMask, vl), vl);
+    vfloat64m2_t mins = __riscv_vfmerge_vfm_f64m2(rh, EXPM1_UNDERFLOW_VALUE_F64, sortMask, vl);
+    fast_2_sum_vv_f64m2(maxs, mins, sh, sl, vl);
     
-    res = __riscv_vfadd_vv_f64m2(rh, __riscv_vfadd_vv_f64m2(sl, rl, vl), vl);
+    res = __riscv_vfadd_vv_f64m2(sh, __riscv_vfadd_vv_f64m2(sl, rl, vl), vl);
 }
 
 forceinline void update_underflow_f64m2(const vfloat64m2_t& x, vfloat64m2_t& res,
@@ -391,6 +374,9 @@ forceinline void update_underflow_f64m2(const vfloat64m2_t& x, vfloat64m2_t& res
 {
     vbool32_t underflowMask = __riscv_vmflt_vf_f64m2_b32(x, underflowThreshold, vl);
     res = __riscv_vfmerge_vfm_f64m2(res, underflowValue, underflowMask, vl);
+#ifndef __FAST_MATH__
+    if (__riscv_vcpop_m_b32(underflowMask, vl)) RVVMF_EXP_CALL_FE_UNDERFLOW();  // FE_UNDERFLOW
+#endif
 }
 
 forceinline void set_sign_f64m2(const vfloat64m2_t& x, vfloat64m2_t& res, size_t vl)
@@ -424,8 +410,8 @@ forceinline void check_special_cases_f64m4(vfloat64m4_t& x, vfloat64m4_t& specia
     vbool16_t mask = __riscv_vmand_mm_b16(__riscv_vmfgt_vf_f64m4_b16(x, overflowThreshold, vl),
         __riscv_vmflt_vf_f64m4_b16(x, RVVMF_EXP_AS_FP64(pinf), vl), vl);
     special = __riscv_vfmerge_vfm_f64m4(special, RVVMF_EXP_AS_FP64(pinf), mask, vl);
-    specialMask = __riscv_vmor_mm_b16(specialMask, mask, vl);  
-    if (__riscv_vcpop_m_b16(mask, vl)) RVVMF_EXP_CALL_FE_OVERFLOW(); 
+    specialMask = __riscv_vmor_mm_b16(specialMask, mask, vl);
+    if (__riscv_vcpop_m_b16(mask, vl)) RVVMF_EXP_CALL_FE_OVERFLOW();
     // NaNs, -inf -- automatically
     x = __riscv_vfmerge_vfm_f64m4(x, ZERO_F64, specialMask, vl);
 }
@@ -474,73 +460,63 @@ forceinline void calculate_exp2_polynom_hl12_f64m4(const vfloat64m4_t& yh, vfloa
 {
     vfloat64m4_t sqryh = __riscv_vfmul_vv_f64m4(yh, yh, vl);
     vfloat64m4_t r = calc_polynom_deg_4_parallel_f64m4(yh, sqryh, EXP2_POL_COEFF_2_F64, EXP2_POL_COEFF_3_F64,
-        EXP2_POL_COEFF_4_F64, EXP2_POL_COEFF_5_F64, EXP2_POL_COEFF_6_F64, vl); 
+        EXP2_POL_COEFF_4_F64, EXP2_POL_COEFF_5_F64, EXP2_POL_COEFF_6_F64, vl);
     fma12_vf_f64m4(yh, EXP2_POL_COEFF_1_F64, __riscv_vfmul_vv_f64m4(sqryh, r, vl), ph, pl, vl);
 }
 
-forceinline void update_exponent_f64m4(const vuint64m4_t& ei, vfloat64m4_t& res, size_t vl)
-{
-    res = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vadd_vv_u64m4(
-        __riscv_vreinterpret_v_f64m4_u64m4(res), __riscv_vsll_vx_u64m4(ei, (size_t)52, vl), vl));
-}
-
-forceinline void update_exponent_with_subnormal_f64m4(const double& subnormalThreshold, const vfloat64m4_t& x,
+forceinline void update_exponent_f64m4(const double& subnormalThreshold, const vfloat64m4_t& x,
     const vuint64m4_t& ei, vfloat64m4_t& res, size_t vl)
 {
-#ifndef __FAST_MATH__
     uint64_t ninf = 0xfff0000000000000;
     vbool16_t subnormalMask = __riscv_vmand_mm_b16(__riscv_vmfgt_vf_f64m4_b16(x, RVVMF_EXP_AS_FP64(ninf), vl),
         __riscv_vmflt_vf_f64m4_b16(x, subnormalThreshold, vl), vl);
-    if (__riscv_vcpop_m_b16(subnormalMask, vl)) RVVMF_EXP_CALL_FE_UNDERFLOW();  // FE_UNDERFLOW
     
-    vuint64m4_t shiftNum = __riscv_vreinterpret_v_i64m4_u64m4(__riscv_vneg_v_i64m4(__riscv_vreinterpret_v_u64m4_i64m4(ei), vl));
-    shiftNum = __riscv_vand_vx_u64m4(__riscv_vadd_vx_u64m4(shiftNum, (uint64_t)1, vl), (uint64_t)0x0000000000000fff, vl);
-    shiftNum = __riscv_vsll_vx_u64m4(shiftNum, (size_t)52, vl);
-    vfloat64m4_t subnormalRes = __riscv_vfadd_vv_f64m4(res, __riscv_vreinterpret_v_u64m4_f64m4(shiftNum), vl);
-    subnormalRes = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vand_vx_u64m4(
-        __riscv_vreinterpret_v_f64m4_u64m4(subnormalRes), (uint64_t)0x800fffffffffffff, vl));
-#endif
-
-    update_exponent_f64m4(ei, res, vl);
+    vuint64m4_t pow2ei = __riscv_vsll_vx_u64m4(__riscv_vand_vx_u64m4(__riscv_vadd_vx_u64m4(ei, (uint64_t)2045, vl),  // 2045=1022+1023
+        (uint64_t)0x00000000000007ff, vl), (size_t)52, vl);
+    // multiplication calls FE_UNDERFLOW if necessary
+    vfloat64m4_t subnormalRes = __riscv_vfmul_vv_f64m4(res, __riscv_vreinterpret_v_u64m4_f64m4(pow2ei), vl);
+    subnormalRes = __riscv_vfmul_vf_f64m4(subnormalRes, 0x1p-1022, vl);
     
-#ifndef __FAST_MATH__
-    res = __riscv_vmerge_vvm_f64m4(res, subnormalRes, subnormalMask, vl);  
-#endif
+    res = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vadd_vv_u64m4(
+        __riscv_vreinterpret_v_f64m4_u64m4(res), __riscv_vsll_vx_u64m4(ei, (size_t)52, vl), vl));
+    
+    res = __riscv_vmerge_vvm_f64m4(res, subnormalRes, subnormalMask, vl);
 }
 
 forceinline void reconstruct_exp_hl_hl_f64m4(const vfloat64m4_t& x, const vuint64m4_t& ei, const vfloat64m4_t& th, const vfloat64m4_t& tl,
-    const vfloat64m4_t& pm4h, const vfloat64m4_t& pm4l, vfloat64m4_t& res, const double& subnormalThreshold, size_t vl)
+    const vfloat64m4_t& pm1h, const vfloat64m4_t& pm1l, vfloat64m4_t& res, const double& subnormalThreshold, size_t vl)
 {
     vfloat64m4_t sh, sl;
-    fast_2_sum_fv_f64m4(ONE_F64, pm4h, sh, sl, vl);
-    sl = __riscv_vfadd_vv_f64m4(sl, pm4l, vl);
+    fast_2_sum_fv_f64m4(ONE_F64, pm1h, sh, sl, vl);
+    sl = __riscv_vfadd_vv_f64m4(sl, pm1l, vl);
     mul21_vv_f64m4(th, tl, sh, sl, res, vl);
-    update_exponent_with_subnormal_f64m4(subnormalThreshold, x, ei, res, vl);
+    update_exponent_f64m4(subnormalThreshold, x, ei, res, vl);
 }
 
 forceinline void reconstruct_expm1_f64m4(const vfloat64m4_t& th, const vfloat64m4_t& tl, 
-    const vfloat64m4_t& pm4h, const vfloat64m4_t& pm4l, const vuint64m4_t& ei, vfloat64m4_t& res, size_t vl)
-{        
-    vfloat64m4_t rh, rl, sh, sl;
-    fast_2_sum_fv_f64m4(ONE_F64, pm4h, rh, rl, vl);
-    rl = __riscv_vfadd_vv_f64m4(rl, pm4l, vl);
-    mul22_vv_f64m4(th, tl, rh, rl, sh, sl, vl);
+    const vfloat64m4_t& pm1h, const vfloat64m4_t& pm1l, const vuint64m4_t& ei, vfloat64m4_t& res, size_t vl)
+{         
+    vfloat64m4_t rh, rl;
+    fast_2_sum_fv_f64m4(ONE_F64, pm1h, rh, rl, vl);
+    rl = __riscv_vfadd_vv_f64m4(rl, pm1l, vl);
+    mul22_vv_f64m4(th, tl, rh, rl, rh, rl, vl);
     
     vuint64m4_t power = __riscv_vsll_vx_u64m4(ei, (size_t)52, vl);
-    sh = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vadd_vv_u64m4(
-        __riscv_vreinterpret_v_f64m4_u64m4(sh), power, vl));   
-    vbool16_t slZeroMask = __riscv_vmfeq_vf_f64m4_b16(sl, ZERO_F64, vl);
-    sl = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vadd_vv_u64m4(
-        __riscv_vreinterpret_v_f64m4_u64m4(sl), power, vl));
-    sl = __riscv_vfmerge_vfm_f64m4(sl, ZERO_F64, slZeroMask, vl);
+    rh = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vadd_vv_u64m4(
+        __riscv_vreinterpret_v_f64m4_u64m4(rh), power, vl));
+    vbool16_t slZeroMask = __riscv_vmfeq_vf_f64m4_b16(rl, ZERO_F64, vl);
+    rl = __riscv_vreinterpret_v_u64m4_f64m4(__riscv_vadd_vv_u64m4(
+        __riscv_vreinterpret_v_f64m4_u64m4(rl), power, vl));
+    rl = __riscv_vfmerge_vfm_f64m4(rl, ZERO_F64, slZeroMask, vl);
     
-    vbool16_t sortMask = __riscv_vmsgtu_vx_u64m4_b16(__riscv_vand_vx_u64m4(
-        __riscv_vreinterpret_v_f64m4_u64m4(sh), (uint64_t)0x7ff0000000000000, vl), (uint64_t)0x3ff0000000000000, vl);
-    vfloat64m4_t maxs = __riscv_vfmerge_vfm_f64m4(sh, EXPM1_UNDERFLOW_VALUE_F64, __riscv_vmnot_m_b16(sortMask, vl), vl);   
-    vfloat64m4_t mins = __riscv_vfmerge_vfm_f64m4(sh, EXPM1_UNDERFLOW_VALUE_F64, sortMask, vl);
-    fast_2_sum_vv_f64m4(maxs, mins, rh, rl, vl);
+    vfloat64m4_t sh, sl;
+    vbool16_t sortMask = __riscv_vmsgtu_vx_u64m4_b16(__riscv_vand_vx_u64m4(__riscv_vreinterpret_v_f64m4_u64m4(rh),
+        (uint64_t)0x7ff0000000000000, vl), (uint64_t)0x3ff0000000000000, vl);
+    vfloat64m4_t maxs = __riscv_vfmerge_vfm_f64m4(rh, EXPM1_UNDERFLOW_VALUE_F64, __riscv_vmnot_m_b16(sortMask, vl), vl);
+    vfloat64m4_t mins = __riscv_vfmerge_vfm_f64m4(rh, EXPM1_UNDERFLOW_VALUE_F64, sortMask, vl);
+    fast_2_sum_vv_f64m4(maxs, mins, sh, sl, vl);
     
-    res = __riscv_vfadd_vv_f64m4(rh, __riscv_vfadd_vv_f64m4(sl, rl, vl), vl);
+    res = __riscv_vfadd_vv_f64m4(sh, __riscv_vfadd_vv_f64m4(sl, rl, vl), vl);
 }
 
 forceinline void update_underflow_f64m4(const vfloat64m4_t& x, vfloat64m4_t& res,
@@ -548,6 +524,9 @@ forceinline void update_underflow_f64m4(const vfloat64m4_t& x, vfloat64m4_t& res
 {
     vbool16_t underflowMask = __riscv_vmflt_vf_f64m4_b16(x, underflowThreshold, vl);
     res = __riscv_vfmerge_vfm_f64m4(res, underflowValue, underflowMask, vl);
+#ifndef __FAST_MATH__
+    if (__riscv_vcpop_m_b16(underflowMask, vl)) RVVMF_EXP_CALL_FE_UNDERFLOW();  // FE_UNDERFLOW
+#endif
 }
 
 forceinline void set_sign_f64m4(const vfloat64m4_t& x, vfloat64m4_t& res, size_t vl)

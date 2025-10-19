@@ -62,7 +62,7 @@ vfloat64m1_t __riscv_vexpm1_f64m1(vfloat64m1_t x, size_t avl)
     reconstruct_expm1_f64m1(th, tl, pm1h, pm1l, ei, res, vl); 
     set_sign_f64m1(x, res, vl);  // process_linear_f64m1(x, res, vl);
     update_underflow_f64m1(x, res, EXPM1_UNDERFLOW_THRESHOLD_F64, EXPM1_UNDERFLOW_VALUE_F64, vl);
-
+    
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f64m1(res, special, specialMask, vl);
 #endif
@@ -258,7 +258,7 @@ vfloat16m1_t __riscv_vexpm1_f16m1(vfloat16m1_t x, size_t avl)
     
     do_exp_argument_reduction_hl_f16m1(x, yh, yl, ei, fi, vl);
     get_table_values_hl_f16m1(fi, th, tl, vl);
-    calculate_exp_polynom_hl_f16m1(yh, yl, pm1h, pm1l, vl);
+    calculate_expm1_polynom_hl_f16m1(yh, yl, pm1h, pm1l, vl);
     reconstruct_expm1_f16m1(th, tl, pm1h, pm1l, ei, res, vl);
     set_sign_f16m1(x, res, vl);  // process_linear_f16m1(x, res, vl);
     update_underflow_f16m1(x, res, EXPM1_UNDERFLOW_THRESHOLD_F16, EXPM1_UNDERFLOW_VALUE_F16, vl);
@@ -285,7 +285,7 @@ vfloat16m2_t __riscv_vexpm1_f16m2(vfloat16m2_t x, size_t avl)
     
     do_exp_argument_reduction_hl_f16m2(x, yh, yl, ei, fi, vl);
     get_table_values_hl_f16m2(fi, th, tl, vl);
-    calculate_exp_polynom_hl_f16m2(yh, yl, pm1h, pm1l, vl);
+    calculate_expm1_polynom_hl_f16m2(yh, yl, pm1h, pm1l, vl);
     reconstruct_expm1_f16m2(th, tl, pm1h, pm1l, ei, res, vl);
     set_sign_f16m2(x, res, vl);  // process_linear_f16m2(x, res, vl);
     update_underflow_f16m2(x, res, EXPM1_UNDERFLOW_THRESHOLD_F16, EXPM1_UNDERFLOW_VALUE_F16, vl);
@@ -312,7 +312,7 @@ vfloat16m4_t __riscv_vexpm1_f16m4(vfloat16m4_t x, size_t avl)
     
     do_exp_argument_reduction_hl_f16m4(x, yh, yl, ei, fi, vl);
     get_table_values_hl_f16m4(fi, th, tl, vl);
-    calculate_exp_polynom_hl_f16m4(yh, yl, pm1h, pm1l, vl);
+    calculate_expm1_polynom_hl_f16m4(yh, yl, pm1h, pm1l, vl);
     reconstruct_expm1_f16m4(th, tl, pm1h, pm1l, ei, res, vl);
     set_sign_f16m4(x, res, vl);  // process_linear_f16m4(x, res, vl);
     update_underflow_f16m4(x, res, EXPM1_UNDERFLOW_THRESHOLD_F16, EXPM1_UNDERFLOW_VALUE_F16, vl);

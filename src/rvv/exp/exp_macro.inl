@@ -93,6 +93,10 @@
     zl = __riscv_vfmsub_vv_##postfix(ah, bh, zh, vl); \
     zl = __riscv_vfadd_vv_##postfix(zl, __riscv_vfmadd_vv_##postfix(ah, bl, __riscv_vfmul_vv_##postfix(al, bh, vl), vl), vl);\
 
+#define RVVMF_EXP_MUL12_VV(postfix, vtype, ah, bh, zh, zl, vl) \
+    zh = __riscv_vfmul_vv_##postfix(ah, bh, vl); \
+    zl = __riscv_vfmsub_vv_##postfix(ah, bh, zh, vl); \
+
 #define RVVMF_EXP_MUL21_VV(postfix, vtype, ah, al, bh, bl, rh, vl) \
     vtype __var_zh_rvvmf_exp_mul21_vv__, __var_zl_rvvmf_exp_mul21_vv__; \
     RVVMF_EXP_MUL22_VV(postfix, vtype, ah, al, bh, bl, __var_zh_rvvmf_exp_mul21_vv__, __var_zl_rvvmf_exp_mul21_vv__, vl); \

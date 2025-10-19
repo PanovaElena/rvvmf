@@ -47,12 +47,9 @@ vfloat64m1_t __riscv_vexp_f64m1(vfloat64m1_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e64m1(avl);
     
 #ifndef __FAST_MATH__
-    const double zeroThreshold = EXP_ZERO_THRESHOLD_F64;
     vfloat64m1_t special;
     vbool64_t specialMask;
     check_special_cases_f64m1(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F64, vl);
-#else
-    const double zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F64;    
 #endif
 
     vfloat64m1_t res, yh, th, tl, pm1h, pm1l;
@@ -62,7 +59,7 @@ vfloat64m1_t __riscv_vexp_f64m1(vfloat64m1_t x, size_t avl)
     get_table_values_hl_f64m1(fi, th, tl, vl);
     calculate_exp_polynom_hl12_f64m1(yh, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f64m1(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F64, vl);
-    update_underflow_f64m1(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F64, vl);
+    update_underflow_f64m1(x, res, EXP_ZERO_THRESHOLD_F64, EXP_UNDERFLOW_VALUE_F64, vl);
 
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f64m1(res, special, specialMask, vl);
@@ -76,12 +73,9 @@ vfloat64m2_t __riscv_vexp_f64m2(vfloat64m2_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e64m2(avl);
     
 #ifndef __FAST_MATH__
-    const double zeroThreshold = EXP_ZERO_THRESHOLD_F64;
     vfloat64m2_t special;
     vbool32_t specialMask;
     check_special_cases_f64m2(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F64, vl);
-#else
-    const double zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F64;    
 #endif
 
     vfloat64m2_t res, yh, th, tl, pm1h, pm1l;
@@ -91,7 +85,7 @@ vfloat64m2_t __riscv_vexp_f64m2(vfloat64m2_t x, size_t avl)
     get_table_values_hl_f64m2(fi, th, tl, vl);
     calculate_exp_polynom_hl12_f64m2(yh, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f64m2(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F64, vl);
-    update_underflow_f64m2(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F64, vl);
+    update_underflow_f64m2(x, res, EXP_ZERO_THRESHOLD_F64, EXP_UNDERFLOW_VALUE_F64, vl);
 
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f64m2(res, special, specialMask, vl);
@@ -105,12 +99,9 @@ vfloat64m4_t __riscv_vexp_f64m4(vfloat64m4_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e64m4(avl);
     
 #ifndef __FAST_MATH__
-    const double zeroThreshold = EXP_ZERO_THRESHOLD_F64;
     vfloat64m4_t special;
     vbool16_t specialMask;
     check_special_cases_f64m4(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F64, vl);
-#else
-    const double zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F64;    
 #endif
 
     vfloat64m4_t res, yh, th, tl, pm1h, pm1l;
@@ -120,7 +111,7 @@ vfloat64m4_t __riscv_vexp_f64m4(vfloat64m4_t x, size_t avl)
     get_table_values_hl_f64m4(fi, th, tl, vl);
     calculate_exp_polynom_hl12_f64m4(yh, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f64m4(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F64, vl);
-    update_underflow_f64m4(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F64, vl);
+    update_underflow_f64m4(x, res, EXP_ZERO_THRESHOLD_F64, EXP_UNDERFLOW_VALUE_F64, vl);
 
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f64m4(res, special, specialMask, vl);
@@ -151,12 +142,9 @@ vfloat32m1_t __riscv_vexp_f32m1(vfloat32m1_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e32m1(avl);
     
 #ifndef __FAST_MATH__
-    const float zeroThreshold = EXP_ZERO_THRESHOLD_F32;
     vfloat32m1_t special;
     vbool32_t specialMask;
     check_special_cases_f32m1(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F32, vl);
-#else
-    const float zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F32;    
 #endif
 
     vfloat32m1_t res, yh, yl, th, tl, pm1h, pm1l;
@@ -166,7 +154,7 @@ vfloat32m1_t __riscv_vexp_f32m1(vfloat32m1_t x, size_t avl)
     get_table_values_hl_f32m1(fi, th, tl, vl);
     calculate_exp_polynom_hl_f32m1(yh, yl, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f32m1(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F32, vl);
-    update_underflow_f32m1(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F32, vl);
+    update_underflow_f32m1(x, res, EXP_ZERO_THRESHOLD_F32, EXP_UNDERFLOW_VALUE_F32, vl);
 
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f32m1(res, special, specialMask, vl);
@@ -180,12 +168,9 @@ vfloat32m2_t __riscv_vexp_f32m2(vfloat32m2_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e32m2(avl);
     
 #ifndef __FAST_MATH__
-    const float zeroThreshold = EXP_ZERO_THRESHOLD_F32;
     vfloat32m2_t special;
     vbool16_t specialMask;
     check_special_cases_f32m2(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F32, vl);
-#else
-    const float zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F32;    
 #endif
 
     vfloat32m2_t res, yh, yl, th, tl, pm1h, pm1l;
@@ -195,7 +180,7 @@ vfloat32m2_t __riscv_vexp_f32m2(vfloat32m2_t x, size_t avl)
     get_table_values_hl_f32m2(fi, th, tl, vl);
     calculate_exp_polynom_hl_f32m2(yh, yl, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f32m2(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F32, vl);
-    update_underflow_f32m2(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F32, vl);
+    update_underflow_f32m2(x, res, EXP_ZERO_THRESHOLD_F32, EXP_UNDERFLOW_VALUE_F32, vl);
 
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f32m2(res, special, specialMask, vl);
@@ -209,12 +194,9 @@ vfloat32m4_t __riscv_vexp_f32m4(vfloat32m4_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e32m4(avl);
     
 #ifndef __FAST_MATH__
-    const float zeroThreshold = EXP_ZERO_THRESHOLD_F32;
     vfloat32m4_t special;
     vbool8_t specialMask;
     check_special_cases_f32m4(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F32, vl);
-#else
-    const float zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F32;    
 #endif
 
     vfloat32m4_t res, yh, yl, th, tl, pm1h, pm1l;
@@ -224,7 +206,7 @@ vfloat32m4_t __riscv_vexp_f32m4(vfloat32m4_t x, size_t avl)
     get_table_values_hl_f32m4(fi, th, tl, vl);
     calculate_exp_polynom_hl_f32m4(yh, yl, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f32m4(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F32, vl);
-    update_underflow_f32m4(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F32, vl);
+    update_underflow_f32m4(x, res, EXP_ZERO_THRESHOLD_F32, EXP_UNDERFLOW_VALUE_F32, vl);
 
 #ifndef __FAST_MATH__
     res = __riscv_vmerge_vvm_f32m4(res, special, specialMask, vl);
@@ -259,12 +241,9 @@ vfloat16m1_t __riscv_vexp_f16m1(vfloat16m1_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e16m1(avl);
     
 #ifndef __FAST_MATH__
-    const FLOAT16_T zeroThreshold = EXP_ZERO_THRESHOLD_F16;
     vfloat16m1_t special;
     vbool16_t specialMask;
     check_special_cases_f16m1(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F16, vl);
-#else
-    const FLOAT16_T zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F16;    
 #endif
 
     vfloat16m1_t res, yh, yl, th, tl, pm1h, pm1l;
@@ -274,7 +253,7 @@ vfloat16m1_t __riscv_vexp_f16m1(vfloat16m1_t x, size_t avl)
     get_table_values_hl_f16m1(fi, th, tl, vl);
     calculate_exp_polynom_hl_f16m1(yh, yl, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f16m1(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F16, vl);
-    update_underflow_f16m1(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F16, vl);
+    update_underflow_f16m1(x, res, EXP_ZERO_THRESHOLD_F16, EXP_UNDERFLOW_VALUE_F16, vl);
     set_pos_sign_f16m1(res, vl);
 
 #ifndef __FAST_MATH__
@@ -289,12 +268,9 @@ vfloat16m2_t __riscv_vexp_f16m2(vfloat16m2_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e16m2(avl);
     
 #ifndef __FAST_MATH__
-    const FLOAT16_T zeroThreshold = EXP_ZERO_THRESHOLD_F16;
     vfloat16m2_t special;
     vbool8_t specialMask;
     check_special_cases_f16m2(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F16, vl);
-#else
-    const FLOAT16_T zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F16;    
 #endif
 
     vfloat16m2_t res, yh, yl, th, tl, pm1h, pm1l;
@@ -304,7 +280,7 @@ vfloat16m2_t __riscv_vexp_f16m2(vfloat16m2_t x, size_t avl)
     get_table_values_hl_f16m2(fi, th, tl, vl);
     calculate_exp_polynom_hl_f16m2(yh, yl, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f16m2(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F16, vl);
-    update_underflow_f16m2(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F16, vl);
+    update_underflow_f16m2(x, res, EXP_ZERO_THRESHOLD_F16, EXP_UNDERFLOW_VALUE_F16, vl);
     set_pos_sign_f16m2(res, vl);
 
 #ifndef __FAST_MATH__
@@ -319,12 +295,9 @@ vfloat16m4_t __riscv_vexp_f16m4(vfloat16m4_t x, size_t avl)
     size_t vl = __riscv_vsetvl_e16m4(avl);
     
 #ifndef __FAST_MATH__
-    const FLOAT16_T zeroThreshold = EXP_ZERO_THRESHOLD_F16;
     vfloat16m4_t special;
     vbool4_t specialMask;
     check_special_cases_f16m4(x, special, specialMask, EXP_EXPM1_OVERFLOW_THRESHOLD_F16, vl);
-#else
-    const FLOAT16_T zeroThreshold = EXP_SUBNORMAL_THRESHOLD_F16;    
 #endif
 
     vfloat16m4_t res, yh, yl, th, tl, pm1h, pm1l;
@@ -334,7 +307,7 @@ vfloat16m4_t __riscv_vexp_f16m4(vfloat16m4_t x, size_t avl)
     get_table_values_hl_f16m4(fi, th, tl, vl);
     calculate_exp_polynom_hl_f16m4(yh, yl, pm1h, pm1l, vl);
     reconstruct_exp_hl_hl_f16m4(x, ei, th, tl, pm1h, pm1l, res, EXP_SUBNORMAL_THRESHOLD_F16, vl);
-    update_underflow_f16m4(x, res, zeroThreshold, EXP_UNDERFLOW_VALUE_F16, vl);
+    update_underflow_f16m4(x, res, EXP_ZERO_THRESHOLD_F16, EXP_UNDERFLOW_VALUE_F16, vl);
     set_pos_sign_f16m4(res, vl);
 
 #ifndef __FAST_MATH__
